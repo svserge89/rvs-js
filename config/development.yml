@@ -2,9 +2,9 @@ server:
   port: 8080
 
 database:
-  host: localhost
+  host: 'localhost'
   port: 5432
-  database: rvsjs
-  username: rvsjs
-  password: rvsjs
+  database: 'rvsjs'
+  username: 'rvsjs'
+  password: 'rvsjs'
   logging: true
