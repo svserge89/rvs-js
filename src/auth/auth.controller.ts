@@ -8,7 +8,7 @@ import {TokenResponseDto} from './dto/token-response.dto';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post()
+  @Post('signIn')
   createToken(
     @Body(new ValidationPipe({transform: true})) credentials: CredentialsDto,
   ): Promise<TokenResponseDto> {
