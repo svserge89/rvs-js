@@ -26,7 +26,7 @@ export class AuthService {
       where: [{nickName: userName}, {email: userName}],
     });
 
-    if (!user || (await checkPassword(password, user.encryptedPassword))) {
+    if (!user || !(await checkPassword(password, user.encryptedPassword))) {
       throw new UnauthorizedException('User name or passwort is invalid');
     }
 
