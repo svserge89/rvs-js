@@ -8,3 +8,7 @@ database:
   username: 'rvsjs'
   password: 'rvsjs'
   logging: true
+
+security:
+  jwtSecret: 'dev_secret_value'
+  jwtExpiresIn: 3600

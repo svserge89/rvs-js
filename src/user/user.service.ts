@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -9,6 +10,7 @@ import {
 import {InjectRepository} from '@nestjs/typeorm';
 import {Repository, SelectQueryBuilder} from 'typeorm';
 
+import {UserPayload} from '../auth/types/user-payload.interface';
 import {
   CHECK_VIOLATION,
   configSelect,
@@ -92,7 +94,10 @@ export class UserService {
   async update(
     id: string,
     {nickName, firstName, lastName, email, password}: UpdateUserDto,
+    userPayload: UserPayload,
   ): Promise<UserResponseDto> {
+    this.checkUserRole(id, userPayload);
+
     if (!nickName && !firstName && !lastName && !email && !password) {
       throw new BadRequestException('All fields is empty');
     }
@@ -164,7 +169,12 @@ export class UserService {
     }
   }
 
-  async findOne(id: string): Promise<UserResponseDto> {
+  async findOne(
+    id: string,
+    userPayload: UserPayload,
+  ): Promise<UserResponseDto> {
+    this.checkUserRole(id, userPayload);
+
     try {
       const user = await this.userRepository.findOne(id, {
         select: SELECT_OPTIONS,
@@ -274,5 +284,14 @@ export class UserService {
         : `:${role} <> ALL (${queryBuilder.alias}.roles)`,
       {[role]: role},
     );
+  }
+
+  private checkUserRole(
+    id: string,
+    {id: userId, isUser, isAdmin}: UserPayload,
+  ): void {
+    if (!isAdmin && (!isUser || id !== userId)) {
+      throw new ForbiddenException();
+    }
   }
 }
