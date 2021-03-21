@@ -23,10 +23,11 @@ import {
   findSkip,
   MIN_PAGE,
 } from '../utils/pagination';
-import {encryptPassword} from '../utils/security';
+import {checkPassword, encryptPassword} from '../utils/security';
 import {configSort} from '../utils/sort';
 import {CreateUserDto} from './dto/create-user.dto';
 import {FindUsersDto} from './dto/find-users.dto';
+import {UpdateUserPasswordDto} from './dto/update-user-password.dto';
 import {UpdateUserRolesDto} from './dto/update-user-roles.dto';
 import {UpdateUserDto} from './dto/update-user.dto';
 import {
@@ -165,6 +166,45 @@ export class UserService {
     }
   }
 
+  async updatePassword(
+    id: string,
+    {oldPassword, password}: UpdateUserPasswordDto,
+    userPayload: UserPayload,
+  ): Promise<void> {
+    UserService.checkUserRole(id, userPayload);
+
+    if (!userPayload.isAdmin && typeof oldPassword === 'undefined') {
+      throw new BadRequestException(
+        'oldPassword field is required for non-admins',
+      );
+    }
+
+    try {
+      await this.userRepository.manager.transaction(async (tm) => {
+        const user = await tm.findOne(UserEntity, id, {
+          select: ['encryptedPassword'],
+        });
+
+        if (!user) {
+          UserService.throwNotFoundException(id);
+        }
+
+        if (
+          !userPayload.isAdmin &&
+          !(await checkPassword(oldPassword, user.encryptedPassword))
+        ) {
+          throw new ConflictException('Invalid old password');
+        }
+
+        const encryptedPassword = await encryptPassword(password);
+
+        await tm.update(UserEntity, {id}, {encryptedPassword});
+      });
+    } catch (exception) {
+      this.checkException(exception);
+    }
+  }
+
   async delete(id: string): Promise<void> {
     try {
       return await this.userRepository.manager.transaction(async (tm) => {
@@ -255,7 +295,10 @@ export class UserService {
   }
 
   private checkException(exception: any, nickName = '', email = '') {
-    if (exception instanceof NotFoundException) {
+    if (
+      exception instanceof NotFoundException ||
+      exception instanceof ConflictException
+    ) {
       throw exception;
     } else if (
       exception.code === UNIQUE_VIOLATION ||

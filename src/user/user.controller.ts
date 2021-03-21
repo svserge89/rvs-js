@@ -3,6 +3,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -20,6 +22,7 @@ import {RolesGuard} from '../auth/guards/roles.guard';
 import {UserPayload} from '../auth/types/user-payload.interface';
 import {CreateUserDto} from './dto/create-user.dto';
 import {FindUsersDto} from './dto/find-users.dto';
+import {UpdateUserPasswordDto} from './dto/update-user-password.dto';
 import {UpdateUserRolesDto} from './dto/update-user-roles.dto';
 import {UpdateUserDto} from './dto/update-user.dto';
 import {UserPageResponseDto} from './dto/user-page-response.dto';
@@ -59,7 +62,18 @@ export class UserController {
     return this.userService.updateRoles(id, userRolesDto);
   }
 
+  @Put(':id/password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  updatePassword(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(ValidationPipe) passwordDto: UpdateUserPasswordDto,
+    @GetUserPayload() userPayload: UserPayload,
+  ): Promise<void> {
+    return this.userService.updatePassword(id, passwordDto, userPayload);
+  }
+
   @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   @RoleAdmin()
   delete(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     return this.userService.delete(id);
