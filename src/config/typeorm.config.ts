@@ -1,7 +1,7 @@
 import {TypeOrmModuleOptions} from '@nestjs/typeorm';
 import {get as getConfig} from 'config';
 
-import {DatabaseConfig} from './database-config.interface';
+import {DatabaseConfig} from './types/database-config.interface';
 
 const config = getConfig<DatabaseConfig>('database');
 

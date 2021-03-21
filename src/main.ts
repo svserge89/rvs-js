@@ -5,7 +5,7 @@ import {NestFactory} from '@nestjs/core';
 import {get as getConfig} from 'config';
 
 import {AppModule} from './app.module';
-import {ServerConfig} from './config/server-config.interface';
+import {ServerConfig} from './config/types/server-config.interface';
 
 const DEFAULT_PORT = getConfig<ServerConfig>('server').port;
 
@@ -19,4 +19,5 @@ async function bootstrap() {
   await app.listen(port);
   logger.log(`Application listening on port ${port}`);
 }
+
 bootstrap();

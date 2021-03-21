@@ -1,7 +1,7 @@
 import {compare, genSalt, hash} from 'bcrypt';
 import {get as getConfig} from 'config';
 
-import {SecurityConfig} from '../config/security-config.interface';
+import {SecurityConfig} from '../config/types/security-config.interface';
 
 const {jwtSecret, jwtExpiresIn} = getConfig<SecurityConfig>('security');
 
