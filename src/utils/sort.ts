@@ -1,20 +1,21 @@
-import {BaseEntity, FindManyOptions} from 'typeorm';
+import {BaseEntity, SelectQueryBuilder} from 'typeorm';
 
 export const DESC_VALUE = 'DESC';
 
 export function configSort<E extends BaseEntity>(
+  queryBuilder: SelectQueryBuilder<E>,
   sort: string[],
-): FindManyOptions<E>['order'] {
-  let prev = '';
+): SelectQueryBuilder<E> {
+  let result = queryBuilder;
 
-  const result: FindManyOptions<E>['order'] = {};
+  for (let i = 0; i < sort.length; ++i) {
+    const fieldWithAlias = `${queryBuilder.alias}.${sort[i]}`;
 
-  for (const sortField of sort) {
-    if (sortField !== DESC_VALUE) {
-      result[sortField] = 'ASC';
-      prev = sortField;
+    if (sort[i + 1] !== DESC_VALUE) {
+      result = result.addOrderBy(fieldWithAlias, 'ASC');
     } else {
-      result[prev] = 'DESC';
+      result = result.addOrderBy(fieldWithAlias, 'DESC');
+      ++i;
     }
   }
 

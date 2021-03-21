@@ -1,14 +1,16 @@
-import {BaseEntity, FindManyOptions, ILike} from 'typeorm';
+import {BaseEntity, SelectQueryBuilder} from 'typeorm';
 
 export function configFilter<E extends BaseEntity>(
+  queryBuilder: SelectQueryBuilder<E>,
   filter: string,
   fields: string[],
-): FindManyOptions<E>['where'] {
-  const result: FindManyOptions<E>['where'] = [];
+): SelectQueryBuilder<E> {
+  let query: string;
 
   for (const field of fields) {
-    result.push({[field]: ILike(`%${filter}%`)});
+    query = query ? query + ' OR ' : '';
+    query += `${queryBuilder.alias}.${field} ILIKE :filter`;
   }
 
-  return result;
+  return queryBuilder.andWhere(`(${query})`, {filter: `%${filter}%`});
 }

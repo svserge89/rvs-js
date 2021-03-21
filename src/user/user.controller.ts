@@ -55,12 +55,7 @@ export class UserController {
 
   @Get()
   find(
-    @Query(
-      new ValidationPipe({
-        transform: true,
-        transformOptions: {enableImplicitConversion: true},
-      }),
-    )
+    @Query(new ValidationPipe({transform: true}))
     usersDto: FindUsersDto,
   ): Promise<UserPageResponseDto> {
     return this.userService.find(usersDto);

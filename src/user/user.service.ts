@@ -7,11 +7,20 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
-import {FindManyOptions, Repository} from 'typeorm';
+import {Repository, SelectQueryBuilder} from 'typeorm';
 
-import {CHECK_VIOLATION, UNIQUE_VIOLATION} from '../utils/database';
+import {
+  CHECK_VIOLATION,
+  configSelect,
+  UNIQUE_VIOLATION,
+} from '../utils/database';
 import {configFilter} from '../utils/filter';
-import {DEFAULT_PAGE, DEFAULT_SIZE, findSkip} from '../utils/pagination';
+import {
+  DEFAULT_PAGE,
+  DEFAULT_SIZE,
+  findSkip,
+  MIN_PAGE,
+} from '../utils/pagination';
 import {encryptPassword} from '../utils/security';
 import {configSort} from '../utils/sort';
 import {CreateUserDto} from './dto/create-user.dto';
@@ -177,29 +186,43 @@ export class UserService {
     sort,
     filter,
     filterFields,
+    isUser,
+    isAdmin,
   }: FindUsersDto): Promise<UserPageResponseDto> {
-    const options: FindManyOptions<UserEntity> = {
-      select: SELECT_OPTIONS,
-      take: size,
-    };
+    let queryBuilder = this.userRepository.createQueryBuilder().take(size);
 
-    if (page !== 1) {
-      options.skip = findSkip(page, size);
+    queryBuilder = configSelect(queryBuilder, SELECT_OPTIONS);
+
+    if (page !== MIN_PAGE) {
+      queryBuilder = queryBuilder.skip(findSkip(page, size));
     }
 
-    if (sort) {
-      options.order = configSort(sort);
+    if (typeof isUser !== 'undefined') {
+      queryBuilder = this.configRoleCheck(queryBuilder, UserRole.USER, isUser);
+    }
+
+    if (typeof isAdmin !== 'undefined') {
+      queryBuilder = this.configRoleCheck(
+        queryBuilder,
+        UserRole.ADMIN,
+        isAdmin,
+      );
     }
 
     if (filter) {
-      options.where = configFilter(
+      queryBuilder = configFilter(
+        queryBuilder,
         filter,
         filterFields || DEFAULT_FILTER_FIELDS,
       );
     }
 
+    if (sort) {
+      queryBuilder = configSort(queryBuilder, sort);
+    }
+
     try {
-      const [users, total] = await this.userRepository.findAndCount(options);
+      const [users, total] = await queryBuilder.getManyAndCount();
 
       return toUserPageResponseDto(users, page, size, total);
     } catch (exception) {
@@ -238,5 +261,18 @@ export class UserService {
 
   private throwNotFoundException(id: string) {
     throw new NotFoundException(`User with id "${id}" not exists`);
+  }
+
+  private configRoleCheck(
+    queryBuilder: SelectQueryBuilder<UserEntity>,
+    role: UserRole,
+    exists: boolean,
+  ): SelectQueryBuilder<UserEntity> {
+    return queryBuilder.andWhere(
+      exists
+        ? `:${role} = ANY (${queryBuilder.alias}.roles)`
+        : `:${role} <> ALL (${queryBuilder.alias}.roles)`,
+      {[role]: role},
+    );
   }
 }

@@ -29,3 +29,9 @@ export function toBoolean({value}: TransformFnParams) {
 
   return value;
 }
+
+export function toInteger({value}: TransformFnParams) {
+  const result = Number.parseInt(value);
+
+  return Number.isNaN(result) ? value : result;
+}

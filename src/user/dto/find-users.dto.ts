@@ -1,8 +1,8 @@
 import {Transform} from 'class-transformer';
-import {IsNotEmpty, IsOptional} from 'class-validator';
+import {IsBoolean, IsNotEmpty, IsOptional} from 'class-validator';
 
 import {PaginationDto} from '../../dto/pagination.dto';
-import {split, trim} from '../../utils/sanitize';
+import {split, trim, toBoolean} from '../../utils/sanitize';
 import {IsValidFields, IsValidSort} from '../../utils/validation';
 import {UserEntity} from '../entity/user.entity';
 
@@ -27,4 +27,14 @@ export class FindUsersDto extends PaginationDto {
   @IsValidFields<UserEntity>(['nickName', 'firstName', 'lastName', 'email'])
   @Transform(split)
   filterFields: string[];
+
+  @IsOptional()
+  @IsBoolean()
+  @Transform(toBoolean)
+  isUser: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  @Transform(toBoolean)
+  isAdmin: boolean;
 }
