@@ -93,12 +93,12 @@ export class UserService {
 
   async update(
     id: string,
-    {nickName, firstName, lastName, email, password}: UpdateUserDto,
+    {nickName, firstName, lastName, email}: UpdateUserDto,
     userPayload: UserPayload,
   ): Promise<UserResponseDto> {
-    this.checkUserRole(id, userPayload);
+    UserService.checkUserRole(id, userPayload);
 
-    if (!nickName && !firstName && !lastName && !email && !password) {
+    if (!nickName && !firstName && !lastName && !email) {
       throw new BadRequestException('All fields is empty');
     }
 
@@ -123,14 +123,10 @@ export class UserService {
             updateFields.email = email;
           }
 
-          if (password) {
-            updateFields.encryptedPassword = await encryptPassword(password);
-          }
-
           const result = await tm.update(UserEntity, {id}, updateFields);
 
           if (!result.affected) {
-            this.throwNotFoundException(id);
+            UserService.throwNotFoundException(id);
           }
 
           return await tm.findOne(UserEntity, id, {select: SELECT_OPTIONS});
@@ -159,7 +155,7 @@ export class UserService {
         const result = await tm.update(UserEntity, {id}, {roles});
 
         if (!result.affected) {
-          this.throwNotFoundException(id);
+          UserService.throwNotFoundException(id);
         }
       });
 
@@ -175,7 +171,7 @@ export class UserService {
         const result = await tm.delete(UserEntity, {id});
 
         if (!result.affected) {
-          this.throwNotFoundException(id);
+          UserService.throwNotFoundException(id);
         }
       });
     } catch (exception) {
@@ -187,7 +183,7 @@ export class UserService {
     id: string,
     userPayload: UserPayload,
   ): Promise<UserResponseDto> {
-    this.checkUserRole(id, userPayload);
+    UserService.checkUserRole(id, userPayload);
 
     try {
       const user = await this.userRepository.findOne(id, {
@@ -195,7 +191,7 @@ export class UserService {
       });
 
       if (!user) {
-        this.throwNotFoundException(id);
+        UserService.throwNotFoundException(id);
       }
 
       return toUserResponseDto(user);
@@ -222,11 +218,15 @@ export class UserService {
     }
 
     if (typeof isUser !== 'undefined') {
-      queryBuilder = this.configRoleCheck(queryBuilder, UserRole.USER, isUser);
+      queryBuilder = UserService.configRoleCheck(
+        queryBuilder,
+        UserRole.USER,
+        isUser,
+      );
     }
 
     if (typeof isAdmin !== 'undefined') {
-      queryBuilder = this.configRoleCheck(
+      queryBuilder = UserService.configRoleCheck(
         queryBuilder,
         UserRole.ADMIN,
         isAdmin,
@@ -283,11 +283,11 @@ export class UserService {
     throw new InternalServerErrorException();
   }
 
-  private throwNotFoundException(id: string) {
+  private static throwNotFoundException(id: string) {
     throw new NotFoundException(`User with id "${id}" not exists`);
   }
 
-  private configRoleCheck(
+  private static configRoleCheck(
     queryBuilder: SelectQueryBuilder<UserEntity>,
     role: UserRole,
     exists: boolean,
@@ -300,7 +300,7 @@ export class UserService {
     );
   }
 
-  private checkUserRole(
+  private static checkUserRole(
     id: string,
     {id: userId, isUser, isAdmin}: UserPayload,
   ): void {
