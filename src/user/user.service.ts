@@ -169,6 +169,20 @@ export class UserService {
     }
   }
 
+  async delete(id: string): Promise<void> {
+    try {
+      return await this.userRepository.manager.transaction(async (tm) => {
+        const result = await tm.delete(UserEntity, {id});
+
+        if (!result.affected) {
+          this.throwNotFoundException(id);
+        }
+      });
+    } catch (exception) {
+      this.checkException(exception);
+    }
+  }
+
   async findOne(
     id: string,
     userPayload: UserPayload,

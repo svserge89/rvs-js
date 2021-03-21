@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseUUIDPipe,
@@ -56,6 +57,12 @@ export class UserController {
     userRolesDto: UpdateUserRolesDto,
   ): Promise<UserRolesResponseDto> {
     return this.userService.updateRoles(id, userRolesDto);
+  }
+
+  @Delete(':id')
+  @RoleAdmin()
+  delete(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+    return this.userService.delete(id);
   }
 
   @Get(':id')
