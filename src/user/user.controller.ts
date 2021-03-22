@@ -17,7 +17,7 @@ import {
 import {AuthGuard} from '@nestjs/passport';
 
 import {GetUserPayload} from '../auth/decorators/get-user-payload.decorator';
-import {RoleAdminOrCurrentUser} from '../auth/decorators/role-admin-or-curren-user.decorator';
+import {RoleAdminOrCurrentUser} from '../auth/decorators/role-admin-or-current-user.decorator';
 import {RoleAdmin} from '../auth/decorators/role-admin.decorator';
 import {RolesGuard} from '../auth/guards/roles.guard';
 import {UserPayload} from '../auth/types/user-payload.interface';
