@@ -8,7 +8,10 @@ const {jwtSecret, jwtExpiresIn} = getConfig<SecurityConfig>('security');
 export const NICK_NAME_MIN_LENGTH = 3;
 export const PASSWORD_MIN_LENGTH = 8;
 export const PASSWORD_MAX_LENGTH = 42;
-export const PASSWORD_REGEX = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!"#$%&'()*+,-.\/:;<=>?\\@[\]^_`{|}~])/;
+export const PASSWORD_MIN_UPPER_CASE = 1;
+export const PASSWORD_MIN_LOWER_CASE = 1;
+export const PASSWORD_MIN_NUMBERS = 1;
+export const PASSWORD_MIN_SYMBOLS = 1;
 
 export const JWT_SECRET = process.env.JWT_SECRET ?? jwtSecret;
 export const JWT_EXPIRES_IN =

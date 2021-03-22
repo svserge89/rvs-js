@@ -1,13 +1,10 @@
-import {Length, Matches} from 'class-validator';
+import {MaxLength} from 'class-validator';
 
-import {
-  PASSWORD_MAX_LENGTH,
-  PASSWORD_MIN_LENGTH,
-  PASSWORD_REGEX,
-} from '../utils/security';
+import {IsStrongPassword} from '../decorators/is-strong-password.decorator';
+import {PASSWORD_MAX_LENGTH} from '../utils/security';
 
 export class PasswordDto {
-  @Matches(PASSWORD_REGEX, {message: 'password is weak'})
-  @Length(PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH)
+  @MaxLength(PASSWORD_MAX_LENGTH)
+  @IsStrongPassword()
   password: string;
 }
