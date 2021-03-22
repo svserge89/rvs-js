@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   ConflictException,
-  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -95,10 +94,7 @@ export class UserService {
   async update(
     id: string,
     {nickName, firstName, lastName, email}: UpdateUserDto,
-    userPayload: UserPayload,
   ): Promise<UserResponseDto> {
-    UserService.checkUserRole(id, userPayload);
-
     if (!nickName && !firstName && !lastName && !email) {
       throw new BadRequestException('All fields is empty');
     }
@@ -171,8 +167,6 @@ export class UserService {
     {oldPassword, password}: UpdateUserPasswordDto,
     userPayload: UserPayload,
   ): Promise<void> {
-    UserService.checkUserRole(id, userPayload);
-
     if (!userPayload.isAdmin && typeof oldPassword === 'undefined') {
       throw new BadRequestException(
         'oldPassword field is required for non-admins',
@@ -219,12 +213,7 @@ export class UserService {
     }
   }
 
-  async findOne(
-    id: string,
-    userPayload: UserPayload,
-  ): Promise<UserResponseDto> {
-    UserService.checkUserRole(id, userPayload);
-
+  async findOne(id: string): Promise<UserResponseDto> {
     try {
       const user = await this.userRepository.findOne(id, {
         select: SELECT_OPTIONS,
@@ -341,14 +330,5 @@ export class UserService {
         : `:${role} <> ALL (${queryBuilder.alias}.roles)`,
       {[role]: role},
     );
-  }
-
-  private static checkUserRole(
-    id: string,
-    {id: userId, isUser, isAdmin}: UserPayload,
-  ): void {
-    if (!isAdmin && (!isUser || id !== userId)) {
-      throw new ForbiddenException();
-    }
   }
 }

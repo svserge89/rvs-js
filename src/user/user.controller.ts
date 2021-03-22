@@ -17,6 +17,7 @@ import {
 import {AuthGuard} from '@nestjs/passport';
 
 import {GetUserPayload} from '../auth/decorators/get-user-payload.decorator';
+import {RoleAdminOrCurrentUser} from '../auth/decorators/role-admin-or-curren-user.decorator';
 import {RoleAdmin} from '../auth/decorators/role-admin.decorator';
 import {RolesGuard} from '../auth/guards/roles.guard';
 import {UserPayload} from '../auth/types/user-payload.interface';
@@ -44,12 +45,12 @@ export class UserController {
   }
 
   @Patch(':id')
+  @RoleAdminOrCurrentUser()
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body(ValidationPipe) userDto: UpdateUserDto,
-    @GetUserPayload() userPayload: UserPayload,
   ): Promise<UserResponseDto> {
-    return this.userService.update(id, userDto, userPayload);
+    return this.userService.update(id, userDto);
   }
 
   @Put(':id/roles')
@@ -64,6 +65,7 @@ export class UserController {
 
   @Put(':id/password')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @RoleAdminOrCurrentUser()
   updatePassword(
     @Param('id', ParseUUIDPipe) id: string,
     @Body(ValidationPipe) passwordDto: UpdateUserPasswordDto,
@@ -80,11 +82,9 @@ export class UserController {
   }
 
   @Get(':id')
-  findOne(
-    @Param('id', ParseUUIDPipe) id: string,
-    @GetUserPayload() userPayload: UserPayload,
-  ): Promise<UserResponseDto> {
-    return this.userService.findOne(id, userPayload);
+  @RoleAdminOrCurrentUser()
+  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<UserResponseDto> {
+    return this.userService.findOne(id);
   }
 
   @Get()
