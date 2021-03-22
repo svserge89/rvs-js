@@ -1,4 +1,5 @@
 import {TransformFnParams} from 'class-transformer';
+import normalizeEmail from 'validator/lib/normalizeEmail';
 
 export function trim({value}: TransformFnParams) {
   if (typeof value === 'string') {
@@ -34,4 +35,12 @@ export function toInteger({value}: TransformFnParams) {
   const result = Number.parseInt(value);
 
   return Number.isNaN(result) ? value : result;
+}
+
+export function toEmail({value}: TransformFnParams) {
+  if (typeof value === 'string') {
+    return normalizeEmail(value.trim());
+  }
+
+  return value;
 }
