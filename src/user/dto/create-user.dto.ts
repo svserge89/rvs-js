@@ -2,7 +2,7 @@ import {Transform} from 'class-transformer';
 import {IsEmail, IsNotEmpty, IsOptional, MinLength} from 'class-validator';
 
 import {PasswordDto} from '../../dto/password.dto';
-import {trim} from '../../utils/sanitize';
+import {toEmail, trim} from '../../utils/sanitize';
 import {NICK_NAME_MIN_LENGTH} from '../../utils/security';
 
 export class CreateUserDto extends PasswordDto {
@@ -21,6 +21,6 @@ export class CreateUserDto extends PasswordDto {
   lastName?: string;
 
   @IsEmail()
-  @Transform(trim)
+  @Transform(toEmail)
   email: string;
 }
