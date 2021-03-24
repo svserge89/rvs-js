@@ -8,5 +8,5 @@ export class UpdateUserPasswordDto extends PasswordDto {
   @IsOptional()
   @MaxLength(PASSWORD_MAX_LENGTH)
   @IsStrongPassword()
-  oldPassword: string;
+  oldPassword?: string;
 }
