@@ -1,23 +1,9 @@
-import {UserEntity} from '../entity/user.entity';
+import {PageResponseDto, toPageResponseDto} from '../../dto/page-response.dto';
 import {toUserResponseDto, UserResponseDto} from './user-response.dto';
 
-export interface UserPageResponseDto {
-  content: UserResponseDto[];
-  page: number;
-  size: number;
-  total: number;
-}
+export type UserPageResponseDto = PageResponseDto<UserResponseDto>;
 
-export function toUserPageResponseDto(
-  content: UserEntity[],
-  page: number,
-  size: number,
-  total: number,
-): UserPageResponseDto {
-  return {
-    content: content.map(toUserResponseDto),
-    page,
-    size,
-    total,
-  };
-}
+export const toUserPageResponseDto = toPageResponseDto.bind(
+  null,
+  toUserResponseDto,
+);
