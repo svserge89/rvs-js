@@ -19,7 +19,7 @@ import {
 } from '../utils/pagination';
 import {configSort} from '../utils/sort';
 import {CreateRestaurantDto} from './dto/create-restaurant.dto';
-import {FindRestaurantDto} from './dto/find-restaurant.dto';
+import {FindRestaurantsDto} from './dto/find-restaurants.dto';
 import {
   RestaurantPageResponseDto,
   toRestaurantPageResponseDto,
@@ -129,7 +129,7 @@ export class RestaurantService {
     sort,
     filter,
     filterFields,
-  }: FindRestaurantDto): Promise<RestaurantPageResponseDto> {
+  }: FindRestaurantsDto): Promise<RestaurantPageResponseDto> {
     let queryBuilder = this.restaurantRepository
       .createQueryBuilder()
       .take(size);

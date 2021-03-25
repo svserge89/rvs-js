@@ -7,7 +7,7 @@ import {FindDto} from '../../dto/find.dto';
 import {split} from '../../utils/sanitize';
 import {RestaurantEntity} from '../entity/restaurant.entity';
 
-export class FindRestaurantDto extends FindDto {
+export class FindRestaurantsDto extends FindDto {
   @IsOptional()
   @IsValidSort<RestaurantEntity>(['name', 'description'])
   @Transform(split)
