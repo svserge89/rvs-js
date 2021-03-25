@@ -39,7 +39,7 @@ export class UserController {
   @Post()
   @RoleAdmin()
   create(
-    @Body(ValidationPipe) userDto: CreateUserDto,
+    @Body(new ValidationPipe({transform: true})) userDto: CreateUserDto,
   ): Promise<UserResponseDto> {
     return this.userService.create(userDto);
   }
@@ -48,7 +48,7 @@ export class UserController {
   @RoleAdminOrCurrentUser()
   update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body(ValidationPipe) userDto: UpdateUserDto,
+    @Body(new ValidationPipe({transform: true})) userDto: UpdateUserDto,
   ): Promise<UserResponseDto> {
     return this.userService.update(id, userDto);
   }
