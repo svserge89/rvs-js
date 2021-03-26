@@ -1,23 +1,19 @@
 import {
-  BadRequestException,
   ConflictException,
   Injectable,
-  InternalServerErrorException,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
 import {Repository} from 'typeorm';
 
-import {CHECK_VIOLATION, UNIQUE_VIOLATION} from '../utils/database';
-import {configFilter} from '../utils/filter';
+import {AllFieldsIsEmptyException} from '../exception/all-fields-is-empty.exception';
+import {UnknownException} from '../exception/unknown.exception';
 import {
-  DEFAULT_PAGE,
-  DEFAULT_SIZE,
-  findSkip,
-  MIN_PAGE,
-} from '../utils/pagination';
-import {configSort} from '../utils/sort';
+  CHECK_VIOLATION,
+  createFindQueryBuilder,
+  UNIQUE_VIOLATION,
+} from '../utils/database';
 import {CreateRestaurantDto} from './dto/create-restaurant.dto';
 import {FindRestaurantsDto} from './dto/find-restaurants.dto';
 import {
@@ -30,6 +26,9 @@ import {
 } from './dto/restaurant-response.dto';
 import {UpdateRestaurantDto} from './dto/update-restaurant.dto';
 import {RestaurantEntity} from './entity/restaurant.entity';
+import {RestaurantConflictNameException} from './exception/restaurant-conflict-name.exception';
+import {RestaurantInvalidNameException} from './exception/restaurant-invalid-name.exception';
+import {RestaurantNotFoundException} from './exception/restaurant-not-found.exception';
 
 const DEFAULT_FILTER_FIELDS: (keyof RestaurantEntity)[] = [
   'name',
