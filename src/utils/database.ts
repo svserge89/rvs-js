@@ -1,4 +1,8 @@
-import {BaseEntity, SelectQueryBuilder} from 'typeorm';
+import {BaseEntity, Repository, SelectQueryBuilder} from 'typeorm';
+
+import {configFilter} from './filter';
+import {DEFAULT_PAGE, DEFAULT_SIZE, findSkip, MIN_PAGE} from './pagination';
+import {configSort} from './sort';
 
 export const NAME_LENGTH = 100;
 export const EMAIL_LENGTH = 100;
@@ -14,4 +18,39 @@ export function configSelect<E extends BaseEntity>(
   return queryBuilder.select(
     select.map((field) => `${queryBuilder.alias}.${field}`),
   );
+}
+
+export type FindQueryBuilderOptions = {
+  page?: number;
+  size?: number;
+  filter?: string;
+  filterFields?: string[];
+  sort?: string[];
+};
+
+export function createFindQueryBuilder<E extends BaseEntity>(
+  repository: Repository<E>,
+  {
+    page = DEFAULT_PAGE,
+    size = DEFAULT_SIZE,
+    filter,
+    filterFields,
+    sort,
+  }: FindQueryBuilderOptions,
+): SelectQueryBuilder<E> {
+  let queryBuilder = repository.createQueryBuilder().take(size);
+
+  if (page !== MIN_PAGE) {
+    queryBuilder = queryBuilder.skip(findSkip(page, size));
+  }
+
+  if (filter) {
+    queryBuilder = configFilter(queryBuilder, filter, filterFields);
+  }
+
+  if (sort) {
+    queryBuilder = configSort(queryBuilder, sort);
+  }
+
+  return queryBuilder;
 }

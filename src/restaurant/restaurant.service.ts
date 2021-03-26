@@ -65,7 +65,7 @@ export class RestaurantService {
     {name, description}: UpdateRestaurantDto,
   ): Promise<RestaurantResponseDto> {
     if (!name && !description) {
-      throw new BadRequestException('All fields is empty');
+      throw new AllFieldsIsEmptyException();
     }
 
     try {
@@ -84,7 +84,7 @@ export class RestaurantService {
           const result = await tm.update(RestaurantEntity, {id}, updateFields);
 
           if (!result.affected) {
-            RestaurantService.throwNotFoundException(id);
+            throw new RestaurantNotFoundException(id);
           }
 
           return await tm.findOne(RestaurantEntity, id);
@@ -101,7 +101,7 @@ export class RestaurantService {
         const result = await tm.delete(RestaurantEntity, id);
 
         if (!result.affected) {
-          RestaurantService.throwNotFoundException(id);
+          throw new RestaurantNotFoundException(id);
         }
       });
     } catch (exception) {
@@ -114,7 +114,7 @@ export class RestaurantService {
       const restaurant = await this.restaurantRepository.findOne(id);
 
       if (!restaurant) {
-        RestaurantService.throwNotFoundException(id);
+        throw new RestaurantNotFoundException(id);
       }
 
       return toRestaurantResponseDto(restaurant);
@@ -124,31 +124,19 @@ export class RestaurantService {
   }
 
   async find({
-    page = DEFAULT_PAGE,
-    size = DEFAULT_SIZE,
+    page,
+    size,
     sort,
     filter,
     filterFields,
   }: FindRestaurantsDto): Promise<RestaurantPageResponseDto> {
-    let queryBuilder = this.restaurantRepository
-      .createQueryBuilder()
-      .take(size);
-
-    if (page !== MIN_PAGE) {
-      queryBuilder = queryBuilder.skip(findSkip(page, size));
-    }
-
-    if (filter) {
-      queryBuilder = configFilter(
-        queryBuilder,
-        filter,
-        filterFields || DEFAULT_FILTER_FIELDS,
-      );
-    }
-
-    if (sort) {
-      queryBuilder = configSort(queryBuilder, sort);
-    }
+    const queryBuilder = createFindQueryBuilder(this.restaurantRepository, {
+      page,
+      size,
+      sort,
+      filter,
+      filterFields: filterFields || DEFAULT_FILTER_FIELDS,
+    });
 
     try {
       const [restaurants, total] = await queryBuilder.getManyAndCount();
@@ -172,24 +160,12 @@ export class RestaurantService {
       this.logger.debug('Exception: ' + JSON.stringify(exception));
 
       if (exception.constraint === 'restaurant_name_key') {
-        throw new ConflictException(
-          `Restaurant with name "${name}" already exists`,
-        );
+        throw new RestaurantConflictNameException(name);
       } else if (exception.constraint === 'restaurant_name_check') {
-        throw new BadRequestException(
-          `Restaurant name has an invalid "${name}" value`,
-        );
+        throw new RestaurantInvalidNameException(name);
       }
     }
 
-    this.logger.error(
-      `Unknown database error: ${exception.message ?? 'Something went wrong.'}`,
-    );
-
-    throw new InternalServerErrorException();
-  }
-
-  private static throwNotFoundException(id: string) {
-    throw new NotFoundException(`Restaurant with id "${id}" not exists`);
+    throw new UnknownException(this.logger, exception);
   }
 }

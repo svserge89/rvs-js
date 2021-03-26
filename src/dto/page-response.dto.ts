@@ -1,3 +1,5 @@
+import {DEFAULT_PAGE, DEFAULT_SIZE} from '../utils/pagination';
+
 export interface PageResponseDto<T> {
   content: T[];
   page: number;
@@ -14,8 +16,8 @@ export function toPageResponseDto<E, T>(
 ): PageResponseDto<T> {
   return {
     content: content.map(toTo),
-    page,
-    size,
+    page: page ?? DEFAULT_PAGE,
+    size: size ?? DEFAULT_SIZE,
     total,
   };
 }

@@ -1,4 +1,4 @@
-import {Injectable, UnauthorizedException} from '@nestjs/common';
+import {Injectable} from '@nestjs/common';
 import {PassportStrategy} from '@nestjs/passport';
 import {InjectRepository} from '@nestjs/typeorm';
 import {ExtractJwt, Strategy} from 'passport-jwt';
@@ -7,6 +7,7 @@ import {Repository} from 'typeorm';
 import {UserEntity} from '../user/entity/user.entity';
 import {UserRole} from '../user/types/user-role.enum';
 import {JWT_SECRET} from '../utils/security';
+import {InvalidTokenException} from './exception/invalid-token.exception';
 import {JwtPayload} from './types/jwt-payload.inteface';
 import {UserPayload} from './types/user-payload.interface';
 
@@ -28,7 +29,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
 
     if (!user) {
-      throw new UnauthorizedException('Invalid token');
+      throw new InvalidTokenException();
     }
 
     return {

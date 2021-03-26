@@ -1,4 +1,4 @@
-import {Injectable, UnauthorizedException} from '@nestjs/common';
+import {Injectable} from '@nestjs/common';
 import {JwtService} from '@nestjs/jwt';
 import {InjectRepository} from '@nestjs/typeorm';
 import {Repository} from 'typeorm';
@@ -7,6 +7,7 @@ import {UserEntity} from '../user/entity/user.entity';
 import {checkPassword} from '../utils/security';
 import {CredentialsDto} from './dto/credentials.dto';
 import {TokenResponseDto} from './dto/token-response.dto';
+import {InvalidUserNameOrPasswordException} from './exception/invalid-user-name-or-password.exception';
 import {JwtPayload} from './types/jwt-payload.inteface';
 
 @Injectable()
@@ -27,7 +28,7 @@ export class AuthService {
     });
 
     if (!user || !(await checkPassword(password, user.encryptedPassword))) {
-      throw new UnauthorizedException('User name or passwort is invalid');
+      throw new InvalidUserNameOrPasswordException();
     }
 
     const payload: JwtPayload = {userId: user.id};

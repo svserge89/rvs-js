@@ -1,8 +1,6 @@
 import {
-  BadRequestException,
   ConflictException,
   Injectable,
-  InternalServerErrorException,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
@@ -10,20 +8,15 @@ import {InjectRepository} from '@nestjs/typeorm';
 import {Repository, SelectQueryBuilder} from 'typeorm';
 
 import {UserPayload} from '../auth/types/user-payload.interface';
+import {AllFieldsIsEmptyException} from '../exception/all-fields-is-empty.exception';
+import {UnknownException} from '../exception/unknown.exception';
 import {
   CHECK_VIOLATION,
   configSelect,
+  createFindQueryBuilder,
   UNIQUE_VIOLATION,
 } from '../utils/database';
-import {configFilter} from '../utils/filter';
-import {
-  DEFAULT_PAGE,
-  DEFAULT_SIZE,
-  findSkip,
-  MIN_PAGE,
-} from '../utils/pagination';
 import {checkPassword, encryptPassword} from '../utils/security';
-import {configSort} from '../utils/sort';
 import {CreateUserDto} from './dto/create-user.dto';
 import {FindUsersDto} from './dto/find-users.dto';
 import {UpdateUserPasswordDto} from './dto/update-user-password.dto';
@@ -39,6 +32,13 @@ import {
   UserRolesResponseDto,
 } from './dto/user-roles-response.dto';
 import {UserEntity} from './entity/user.entity';
+import {InvalidOldPasswordException} from './exception/invalid-old-password.exception';
+import {OldPasswordRequiredException} from './exception/old-password-required.exception';
+import {UserConflictEmailException} from './exception/user-conflict-email.exception';
+import {UserConflictNickNameException} from './exception/user-conflict-nick-name.exception';
+import {UserInvalidEmailException} from './exception/user-invalid-email.exception';
+import {UserInvalidNickNameException} from './exception/user-invalid-nick-name.exception';
+import {UserNotFoundException} from './exception/user-not-found.exception';
 import {UserRole} from './types/user-role.enum';
 
 const SELECT_OPTIONS: (keyof UserEntity)[] = [
@@ -96,7 +96,7 @@ export class UserService {
     {nickName, firstName, lastName, email}: UpdateUserDto,
   ): Promise<UserResponseDto> {
     if (!nickName && !firstName && !lastName && !email) {
-      throw new BadRequestException('All fields is empty');
+      throw new AllFieldsIsEmptyException();
     }
 
     try {
@@ -123,7 +123,7 @@ export class UserService {
           const result = await tm.update(UserEntity, {id}, updateFields);
 
           if (!result.affected) {
-            UserService.throwNotFoundException(id);
+            throw new UserNotFoundException(id);
           }
 
           return await tm.findOne(UserEntity, id, {select: SELECT_OPTIONS});
@@ -152,7 +152,7 @@ export class UserService {
         const result = await tm.update(UserEntity, {id}, {roles});
 
         if (!result.affected) {
-          UserService.throwNotFoundException(id);
+          throw new UserNotFoundException(id);
         }
       });
 
@@ -168,9 +168,7 @@ export class UserService {
     userPayload: UserPayload,
   ): Promise<void> {
     if (!userPayload.isAdmin && typeof oldPassword === 'undefined') {
-      throw new BadRequestException(
-        'oldPassword field is required for non-admins',
-      );
+      throw new OldPasswordRequiredException();
     }
 
     try {
@@ -180,14 +178,14 @@ export class UserService {
         });
 
         if (!user) {
-          UserService.throwNotFoundException(id);
+          throw new UserNotFoundException(id);
         }
 
         if (
           !userPayload.isAdmin &&
           !(await checkPassword(oldPassword, user.encryptedPassword))
         ) {
-          throw new ConflictException('Invalid old password');
+          throw new InvalidOldPasswordException();
         }
 
         const encryptedPassword = await encryptPassword(password);
@@ -205,7 +203,7 @@ export class UserService {
         const result = await tm.delete(UserEntity, {id});
 
         if (!result.affected) {
-          UserService.throwNotFoundException(id);
+          throw new UserNotFoundException(id);
         }
       });
     } catch (exception) {
@@ -220,7 +218,7 @@ export class UserService {
       });
 
       if (!user) {
-        UserService.throwNotFoundException(id);
+        throw new UserNotFoundException(id);
       }
 
       return toUserResponseDto(user);
@@ -230,21 +228,23 @@ export class UserService {
   }
 
   async find({
-    page = DEFAULT_PAGE,
-    size = DEFAULT_SIZE,
+    page,
+    size,
     sort,
     filter,
     filterFields,
     isUser,
     isAdmin,
   }: FindUsersDto): Promise<UserPageResponseDto> {
-    let queryBuilder = this.userRepository.createQueryBuilder().take(size);
+    let queryBuilder = createFindQueryBuilder(this.userRepository, {
+      page,
+      size,
+      sort,
+      filter,
+      filterFields: filterFields || DEFAULT_FILTER_FIELDS,
+    });
 
     queryBuilder = configSelect(queryBuilder, SELECT_OPTIONS);
-
-    if (page !== MIN_PAGE) {
-      queryBuilder = queryBuilder.skip(findSkip(page, size));
-    }
 
     if (typeof isUser !== 'undefined') {
       queryBuilder = UserService.configRoleCheck(
@@ -262,18 +262,6 @@ export class UserService {
       );
     }
 
-    if (filter) {
-      queryBuilder = configFilter(
-        queryBuilder,
-        filter,
-        filterFields || DEFAULT_FILTER_FIELDS,
-      );
-    }
-
-    if (sort) {
-      queryBuilder = configSort(queryBuilder, sort);
-    }
-
     try {
       const [users, total] = await queryBuilder.getManyAndCount();
 
@@ -283,7 +271,7 @@ export class UserService {
     }
   }
 
-  private checkException(exception: any, nickName = '', email = '') {
+  private checkException(exception: any, nickName?: string, email?: string) {
     if (
       exception instanceof NotFoundException ||
       exception instanceof ConflictException
@@ -296,27 +284,17 @@ export class UserService {
       this.logger.debug('Exception: ' + JSON.stringify(exception));
 
       if (exception.constraint === 'user_nick_name_key') {
-        throw new ConflictException(`Nickname "${nickName}" already exists`);
+        throw new UserConflictNickNameException(nickName);
       } else if (exception.constraint === 'user_email_lower_idx') {
-        throw new ConflictException(`Email "${email}" already exists`);
+        throw new UserConflictEmailException(email);
       } else if (exception.constraint === 'user_nick_name_check') {
-        throw new BadRequestException(
-          `Nickname has an invalid "${nickName}" value`,
-        );
+        throw new UserInvalidNickNameException(nickName);
       } else if (exception.constraint === 'user_email_check') {
-        throw new BadRequestException(`Email has an invalid "${email}" value`);
+        throw new UserInvalidEmailException(email);
       }
     }
 
-    this.logger.error(
-      `Unknown database error: ${exception.message ?? 'Something went wrong.'}`,
-    );
-
-    throw new InternalServerErrorException();
-  }
-
-  private static throwNotFoundException(id: string) {
-    throw new NotFoundException(`User with id "${id}" not exists`);
+    throw new UnknownException(this.logger, exception);
   }
 
   private static configRoleCheck(
