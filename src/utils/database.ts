@@ -1,5 +1,7 @@
+import {LocalDate} from '@js-joda/core';
 import {BaseEntity, Repository, SelectQueryBuilder} from 'typeorm';
 
+import {configDateFilter} from './datetime';
 import {configFilter} from './filter';
 import {DEFAULT_PAGE, DEFAULT_SIZE, findSkip, MIN_PAGE} from './pagination';
 import {configSort} from './sort';
@@ -26,6 +28,9 @@ export type FindQueryBuilderOptions = {
   filter?: string;
   filterFields?: string[];
   sort?: string[];
+  date?: LocalDate;
+  minDate?: LocalDate;
+  maxDate?: LocalDate;
 };
 
 export function createFindQueryBuilder<E extends BaseEntity>(
@@ -36,6 +41,9 @@ export function createFindQueryBuilder<E extends BaseEntity>(
     filter,
     filterFields,
     sort,
+    date,
+    minDate,
+    maxDate,
   }: FindQueryBuilderOptions,
 ): SelectQueryBuilder<E> {
   let queryBuilder = repository.createQueryBuilder().take(size);
@@ -43,6 +51,8 @@ export function createFindQueryBuilder<E extends BaseEntity>(
   if (page !== MIN_PAGE) {
     queryBuilder = queryBuilder.skip(findSkip(page, size));
   }
+
+  queryBuilder = configDateFilter(queryBuilder, {date, minDate, maxDate});
 
   if (filter) {
     queryBuilder = configFilter(queryBuilder, filter, filterFields);

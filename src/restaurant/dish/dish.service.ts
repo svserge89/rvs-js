@@ -153,7 +153,16 @@ export class DishService {
 
   async find(
     restaurantId: string,
-    {page, size, sort, filter, filterFields}: FindDishesDto,
+    {
+      page,
+      size,
+      sort,
+      filter,
+      filterFields,
+      date,
+      minDate,
+      maxDate,
+    }: FindDishesDto,
   ): Promise<DishPageResponseDto> {
     const queryBuilder = createFindQueryBuilder(this.dishRepository, {
       page,
@@ -161,6 +170,9 @@ export class DishService {
       sort,
       filter,
       filterFields: filterFields || DEFAULT_FILTER_FIELDS,
+      date,
+      minDate,
+      maxDate,
     });
 
     try {
