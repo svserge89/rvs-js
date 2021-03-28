@@ -9,7 +9,9 @@ export function configSort<E extends BaseEntity>(
   let result = queryBuilder;
 
   for (let i = 0; i < sort.length; ++i) {
-    const fieldWithAlias = `${queryBuilder.alias}.${sort[i]}`;
+    const fieldWithAlias = sort[i].includes('.')
+      ? sort[i]
+      : `${queryBuilder.alias}.${sort[i]}`;
 
     if (sort[i + 1] !== DESC_VALUE) {
       result = result.addOrderBy(fieldWithAlias, 'ASC');

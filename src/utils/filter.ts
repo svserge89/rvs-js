@@ -9,7 +9,12 @@ export function configFilter<E extends BaseEntity>(
 
   for (const field of fields) {
     query = query ? query + ' OR ' : '';
-    query += `${queryBuilder.alias}.${field} ILIKE :filter`;
+
+    const alias = field.includes('.')
+      ? field
+      : `${queryBuilder.alias}.${field}`;
+
+    query += `${alias} ILIKE :filter`;
   }
 
   return queryBuilder.andWhere(`(${query})`, {filter: `%${filter}%`});
