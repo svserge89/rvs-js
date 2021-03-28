@@ -175,6 +175,11 @@ export class DishService {
       maxDate,
     });
 
+    queryBuilder.andWhere(
+      `${queryBuilder.alias}.restaurant.id = :restaurantId`,
+      {restaurantId},
+    );
+
     try {
       const [dishes, total] = await queryBuilder.getManyAndCount();
 
