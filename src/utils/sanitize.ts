@@ -1,4 +1,4 @@
-import {DateTimeFormatter, LocalDate} from '@js-joda/core';
+import {DateTimeFormatter, LocalDate, LocalTime} from '@js-joda/core';
 import {TransformFnParams} from 'class-transformer';
 import normalizeEmail from 'validator/lib/normalizeEmail';
 
@@ -49,6 +49,14 @@ export function toEmail({value}: TransformFnParams) {
 export function toLocalDate({value}: TransformFnParams) {
   try {
     return LocalDate.parse(value.trim(), DateTimeFormatter.ISO_LOCAL_DATE);
+  } catch {
+    return value;
+  }
+}
+
+export function toLocalTime({value}: TransformFnParams) {
+  try {
+    return LocalTime.parse(value.trim(), DateTimeFormatter.ISO_LOCAL_TIME);
   } catch {
     return value;
   }
