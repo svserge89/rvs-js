@@ -17,6 +17,7 @@ import {
   UNIQUE_VIOLATION,
 } from '../utils/database';
 import {checkPassword, encryptPassword} from '../utils/security';
+import {DESC_VALUE} from '../utils/sort';
 import {CreateUserDto} from './dto/create-user.dto';
 import {FindUsersDto} from './dto/find-users.dto';
 import {UpdateUserPasswordDto} from './dto/update-user-password.dto';
@@ -50,11 +51,14 @@ const SELECT_OPTIONS: (keyof UserEntity)[] = [
   'imageUrl',
   'roles',
 ];
-
 const DEFAULT_FILTER_FIELDS: (keyof UserEntity)[] = [
   'nickName',
   'firstName',
   'lastName',
+  'email',
+];
+const DEFAULT_SORT_FIELDS: (keyof UserEntity | typeof DESC_VALUE)[] = [
+  'nickName',
   'email',
 ];
 
@@ -230,9 +234,9 @@ export class UserService {
   async find({
     page,
     size,
-    sort,
     filter,
-    filterFields,
+    filterFields = DEFAULT_FILTER_FIELDS,
+    sort = DEFAULT_SORT_FIELDS,
     isUser,
     isAdmin,
   }: FindUsersDto): Promise<UserPageResponseDto> {
@@ -241,7 +245,7 @@ export class UserService {
       size,
       sort,
       filter,
-      filterFields: filterFields || DEFAULT_FILTER_FIELDS,
+      filterFields,
     });
 
     queryBuilder = configSelect(queryBuilder, SELECT_OPTIONS);

@@ -14,6 +14,7 @@ import {
   createFindQueryBuilder,
   UNIQUE_VIOLATION,
 } from '../../utils/database';
+import {DESC_VALUE} from '../../utils/sort';
 import {RestaurantEntity} from '../entity/restaurant.entity';
 import {RestaurantNotFoundException} from '../exception/restaurant-not-found.exception';
 import {CreateDishDto} from './dto/create-dish.dto';
@@ -30,6 +31,11 @@ import {DishInvalidNameException} from './exception/dish-invalid-name.exception'
 import {DishNotFoundException} from './exception/dish-not-found.exception';
 
 const DEFAULT_FILTER_FIELDS: (keyof DishEntity)[] = ['name', 'description'];
+const DEFAULT_SORT_FIELDS: (keyof DishEntity | typeof DESC_VALUE)[] = [
+  'name',
+  'date',
+  'DESC',
+];
 
 @Injectable()
 export class DishService {
@@ -156,9 +162,9 @@ export class DishService {
     {
       page,
       size,
-      sort,
       filter,
-      filterFields,
+      filterFields = DEFAULT_FILTER_FIELDS,
+      sort = DEFAULT_SORT_FIELDS,
       date,
       minDate,
       maxDate,
@@ -169,7 +175,7 @@ export class DishService {
       size,
       sort,
       filter,
-      filterFields: filterFields || DEFAULT_FILTER_FIELDS,
+      filterFields,
       date,
       minDate,
       maxDate,

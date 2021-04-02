@@ -1,3 +1,4 @@
+import {LocalDate} from '@js-joda/core';
 import {
   ConflictException,
   Injectable,
@@ -14,6 +15,7 @@ import {
   createFindQueryBuilder,
   UNIQUE_VIOLATION,
 } from '../../utils/database';
+import {DESC_VALUE} from '../../utils/sort';
 import {DishEntity} from '../dish/entity/dish.entity';
 import {DishNotFoundException} from '../dish/exception/dish-not-found.exception';
 import {RestaurantEntity} from '../entity/restaurant.entity';
@@ -38,6 +40,10 @@ const DEFAULT_FILTER_FIELDS: (keyof (MenuEntryEntity & DishEntity))[] = [
   'name',
   'description',
 ];
+const DEFAULT_SORT_FIELDS: (
+  | keyof (MenuEntryEntity & DishEntity)
+  | typeof DESC_VALUE
+)[] = ['price', 'name'];
 
 @Injectable()
 export class MenuEntryService {
@@ -192,9 +198,9 @@ export class MenuEntryService {
       page,
       size,
       filter,
-      filterFields,
-      sort,
-      date,
+      filterFields = DEFAULT_FILTER_FIELDS,
+      sort = DEFAULT_SORT_FIELDS,
+      date = LocalDate.now(),
       minDate,
       maxDate,
     }: FindMenuEntriesDto,
@@ -208,7 +214,7 @@ export class MenuEntryService {
       page,
       size,
       filter,
-      filterFields: filterFields || DEFAULT_FILTER_FIELDS,
+      filterFields,
       sort,
       date,
       minDate,

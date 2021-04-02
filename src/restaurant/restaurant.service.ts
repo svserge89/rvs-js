@@ -14,6 +14,7 @@ import {
   createFindQueryBuilder,
   UNIQUE_VIOLATION,
 } from '../utils/database';
+import {DESC_VALUE} from '../utils/sort';
 import {CreateRestaurantDto} from './dto/create-restaurant.dto';
 import {FindRestaurantsDto} from './dto/find-restaurants.dto';
 import {
@@ -33,6 +34,9 @@ import {RestaurantNotFoundException} from './exception/restaurant-not-found.exce
 const DEFAULT_FILTER_FIELDS: (keyof RestaurantEntity)[] = [
   'name',
   'description',
+];
+const DEFAULT_SORT_FIELDS: (keyof RestaurantEntity | typeof DESC_VALUE)[] = [
+  'name',
 ];
 
 @Injectable()
@@ -125,16 +129,16 @@ export class RestaurantService {
   async find({
     page,
     size,
-    sort,
     filter,
-    filterFields,
+    filterFields = DEFAULT_FILTER_FIELDS,
+    sort = DEFAULT_SORT_FIELDS,
   }: FindRestaurantsDto): Promise<RestaurantPageResponseDto> {
     const queryBuilder = createFindQueryBuilder(this.restaurantRepository, {
       page,
       size,
       sort,
       filter,
-      filterFields: filterFields || DEFAULT_FILTER_FIELDS,
+      filterFields,
     });
 
     try {
