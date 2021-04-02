@@ -1,4 +1,4 @@
-import {DateTimeFormatter, LocalDate} from '@js-joda/core';
+import {DateTimeFormatter, LocalDate, LocalTime} from '@js-joda/core';
 import {BaseEntity, SelectQueryBuilder, ValueTransformer} from 'typeorm';
 
 export class DateTransformer implements ValueTransformer {
@@ -8,6 +8,16 @@ export class DateTransformer implements ValueTransformer {
 
   to(localDate: LocalDate): string {
     return localDate?.format(DateTimeFormatter.ISO_LOCAL_DATE);
+  }
+}
+
+export class TimeTransformer implements ValueTransformer {
+  from(time: string): LocalTime {
+    return LocalTime.parse(time, DateTimeFormatter.ISO_LOCAL_TIME);
+  }
+
+  to(localTime: LocalTime): string {
+    return localTime?.format(DateTimeFormatter.ISO_LOCAL_TIME);
   }
 }
 
@@ -21,11 +31,7 @@ export function configDateFilter<E extends BaseEntity>(
   queryBuilder: SelectQueryBuilder<E>,
   {date, minDate, maxDate}: ConfigDateFilterOptions,
 ): SelectQueryBuilder<E> {
-  if (date) {
-    return queryBuilder.andWhere(`${queryBuilder.alias}.date = :date`, {
-      date,
-    });
-  } else if (minDate && maxDate) {
+  if (minDate && maxDate) {
     return queryBuilder.andWhere(
       `(${queryBuilder.alias}.date BETWEEN :minDate AND :maxDate)`,
       {minDate, maxDate},
@@ -37,6 +43,10 @@ export function configDateFilter<E extends BaseEntity>(
   } else if (maxDate) {
     return queryBuilder.andWhere(`${queryBuilder.alias}.date <= :maxDate`, {
       maxDate,
+    });
+  } else if (date) {
+    return queryBuilder.andWhere(`${queryBuilder.alias}.date = :date`, {
+      date,
     });
   } else {
     return queryBuilder;
