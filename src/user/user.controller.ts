@@ -21,6 +21,9 @@ import {RoleAdminOrCurrentUser} from '../auth/decorators/role-admin-or-current-u
 import {RoleAdmin} from '../auth/decorators/role-admin.decorator';
 import {RolesGuard} from '../auth/guards/roles.guard';
 import {UserPayload} from '../auth/types/user-payload.interface';
+import {FindVoteEntriesByUserDto} from '../restaurant/vote/dto/find-vote-entries-by-user.dto';
+import {VoteEntryPageResponseDto} from '../restaurant/vote/dto/vote-entry-page-response.dto';
+import {VoteService} from '../restaurant/vote/vote.service';
 import {CreateUserDto} from './dto/create-user.dto';
 import {FindUsersDto} from './dto/find-users.dto';
 import {UpdateUserPasswordDto} from './dto/update-user-password.dto';
@@ -34,7 +37,10 @@ import {UserService} from './user.service';
 @Controller('user')
 @UseGuards(AuthGuard(), RolesGuard)
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly voteService: VoteService,
+  ) {}
 
   @Post()
   @RoleAdmin()
@@ -94,5 +100,16 @@ export class UserController {
     usersDto: FindUsersDto,
   ): Promise<UserPageResponseDto> {
     return this.userService.find(usersDto);
+  }
+
+  @Get(':id/votes')
+  @RoleAdminOrCurrentUser()
+  findVotes(
+    @Param('id', ParseUUIDPipe) id: string,
+
+    @Query(new ValidationPipe({transform: true}))
+    findVotesDto: FindVoteEntriesByUserDto,
+  ): Promise<VoteEntryPageResponseDto> {
+    return this.voteService.findByUser(id, findVotesDto);
   }
 }
