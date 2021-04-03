@@ -1,6 +1,9 @@
 import {DateTimeFormatter, LocalDate, LocalTime} from '@js-joda/core';
 import {BaseEntity, SelectQueryBuilder, ValueTransformer} from 'typeorm';
 
+export const MIN_DATE = LocalDate.of(1, 1, 1);
+export const MAX_DATE = LocalDate.of(3000, 1, 1);
+
 export class DateTransformer implements ValueTransformer {
   from(date: string): LocalDate {
     return LocalDate.parse(date, DateTimeFormatter.ISO_LOCAL_DATE);
