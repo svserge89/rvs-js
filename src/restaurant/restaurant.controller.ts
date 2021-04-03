@@ -21,10 +21,15 @@ import {RestaurantPageResponseDto} from './dto/restaurant-page-response.dto';
 import {RestaurantResponseDto} from './dto/restaurant-response.dto';
 import {UpdateRestaurantDto} from './dto/update-restaurant.dto';
 import {RestaurantService} from './restaurant.service';
+import {FindRatingDto} from './vote/dto/find-rating.dto';
+import {VoteService} from './vote/vote.service';
 
 @Controller('restaurant')
 export class RestaurantController {
-  constructor(private readonly restaurantService: RestaurantService) {}
+  constructor(
+    private readonly restaurantService: RestaurantService,
+    private readonly voteService: VoteService,
+  ) {}
 
   @Post()
   @UseGuards(AuthGuard(), RolesGuard)
@@ -67,5 +72,13 @@ export class RestaurantController {
     restaurantsDto: FindRestaurantsDto,
   ): Promise<RestaurantPageResponseDto> {
     return this.restaurantService.find(restaurantsDto);
+  }
+
+  @Get(':id/rating')
+  rating(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query(new ValidationPipe({transform: true})) findRatingDto: FindRatingDto,
+  ): Promise<number> {
+    return this.voteService.rating(id, findRatingDto);
   }
 }
