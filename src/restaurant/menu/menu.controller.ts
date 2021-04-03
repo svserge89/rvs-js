@@ -20,11 +20,11 @@ import {FindMenuEntriesDto} from './dto/find-menu-entries.dto';
 import {MenuEntryPageResponseDto} from './dto/menu-entry-page-response.dto';
 import {MenuEntryResponseDto} from './dto/menu-entry-response.dto';
 import {UpdateMenuEntryDto} from './dto/update-menu-entry.dto';
-import {MenuEntryService} from './menu-entry.service';
+import {MenuService} from './menu.service';
 
-@Controller('restaurant/:restaurantId/menu-entry')
-export class MenuEntryController {
-  constructor(private readonly menuEntryService: MenuEntryService) {}
+@Controller('restaurant/:restaurantId/menu')
+export class MenuController {
+  constructor(private readonly menuEntryService: MenuService) {}
 
   @Post()
   @UseGuards(AuthGuard(), RolesGuard)

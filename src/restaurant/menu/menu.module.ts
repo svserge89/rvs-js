@@ -3,12 +3,12 @@ import {TypeOrmModule} from '@nestjs/typeorm';
 
 import {AuthModule} from '../../auth/auth.module';
 import {MenuEntryEntity} from './entity/menu-entry.entity';
-import {MenuEntryController} from './menu-entry.controller';
-import {MenuEntryService} from './menu-entry.service';
+import {MenuController} from './menu.controller';
+import {MenuService} from './menu.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([MenuEntryEntity]), AuthModule],
-  providers: [MenuEntryService],
-  controllers: [MenuEntryController],
+  providers: [MenuService],
+  controllers: [MenuController],
 })
-export class MenuEntryModule {}
+export class MenuModule {}

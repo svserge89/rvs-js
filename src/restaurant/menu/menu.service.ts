@@ -46,7 +46,7 @@ const DEFAULT_SORT_FIELDS: (
 )[] = ['price', 'name'];
 
 @Injectable()
-export class MenuEntryService {
+export class MenuService {
   private readonly logger = new Logger('MenuEntryService');
 
   constructor(
