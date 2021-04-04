@@ -56,25 +56,25 @@ export class VoteService {
           throw new RestaurantNotFoundException(restaurantId);
         }
 
-        const vote = await tm.findOne(VoteEntryEntity, {
-          user: {id: userId},
-          date: LocalDate.now(),
-        });
+        const vote = await tm.findOne(
+          VoteEntryEntity,
+          {
+            user: {id: userId},
+            date: LocalDate.now(),
+          },
+          {select: ['id']},
+        );
 
         if (vote) {
-          if (vote.restaurant.id === restaurantId) {
-            return;
-          }
-
           if (!checkVoteTime()) {
             throw new VoteEntryChangeRestrictedException();
           }
 
-          vote.restaurant = restaurant;
-          vote.date = LocalDate.now();
-          vote.time = LocalTime.now();
-
-          await tm.save(vote);
+          await tm.update(
+            VoteEntryEntity,
+            {id: vote.id},
+            {restaurant, time: LocalTime.now()},
+          );
         } else {
           await tm.insert(VoteEntryEntity, {user: {id: userId}, restaurant});
         }
