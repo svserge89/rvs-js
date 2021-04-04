@@ -6,17 +6,11 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
-import {
-  Between,
-  FindConditions,
-  LessThanOrEqual,
-  MoreThanOrEqual,
-  Repository,
-} from 'typeorm';
+import {Repository} from 'typeorm';
 
 import {UnknownException} from '../../exception/unknown.exception';
 import {createFindQueryBuilder, UNIQUE_VIOLATION} from '../../utils/database';
-import {checkVoteTime} from '../../utils/datetime';
+import {checkVoteTime, configDateFilter} from '../../utils/datetime';
 import {DESC_VALUE} from '../../utils/sort';
 import {RestaurantEntity} from '../entity/restaurant.entity';
 import {RestaurantNotFoundException} from '../exception/restaurant-not-found.exception';
@@ -109,22 +103,19 @@ export class VoteService {
     restaurantId: string,
     {date, minDate, maxDate}: FindRatingDto,
   ): Promise<number> {
-    let where: FindConditions<VoteEntryEntity> = {
-      restaurant: {id: restaurantId},
-    };
+    let queryBuilder = this.voteEntryRepository.createQueryBuilder();
 
-    if (minDate && maxDate) {
-      where = {...where, date: Between(minDate, maxDate)};
-    } else if (minDate) {
-      where = {...where, date: MoreThanOrEqual(minDate)};
-    } else if (maxDate) {
-      where = {...where, date: LessThanOrEqual(maxDate)};
-    } else if (date) {
-      where = {...where, date};
-    }
+    queryBuilder = queryBuilder.where(
+      `${queryBuilder.alias}.restaurant.id = :restaurantId`,
+      {
+        restaurantId,
+      },
+    );
+
+    queryBuilder = configDateFilter(queryBuilder, {date, minDate, maxDate});
 
     try {
-      return await this.voteEntryRepository.count({select: ['id'], where});
+      return await queryBuilder.getCount();
     } catch (exception) {
       this.checkException(exception);
     }
