@@ -15,11 +15,8 @@ import {
 } from 'typeorm';
 
 import {UnknownException} from '../../exception/unknown.exception';
-import {
-  CHECK_VIOLATION,
-  createFindQueryBuilder,
-  UNIQUE_VIOLATION,
-} from '../../utils/database';
+import {createFindQueryBuilder, UNIQUE_VIOLATION} from '../../utils/database';
+import {checkVoteTime} from '../../utils/datetime';
 import {DESC_VALUE} from '../../utils/sort';
 import {RestaurantEntity} from '../entity/restaurant.entity';
 import {RestaurantNotFoundException} from '../exception/restaurant-not-found.exception';
@@ -30,6 +27,7 @@ import {
   VoteEntryPageResponseDto,
 } from './dto/vote-entry-page-response.dto';
 import {VoteEntryEntity} from './entity/vote-entry.entity';
+import {VoteEntryChangeRestrictedException} from './exception/vote-entry-change-restricted.exception';
 import {VoteEntryConflictUserException} from './exception/vote-entry-conflict-user.exception';
 import {VoteEntryNotFoundException} from './exception/vote-entry-not-found.exception';
 
@@ -68,6 +66,10 @@ export class VoteService {
             return;
           }
 
+          if (!checkVoteTime()) {
+            throw new VoteEntryChangeRestrictedException();
+          }
+
           vote.restaurant = restaurant;
           vote.date = LocalDate.now();
           vote.time = LocalTime.now();
@@ -83,6 +85,10 @@ export class VoteService {
   }
 
   async delete(userId: string, restaurantId: string): Promise<void> {
+    if (!checkVoteTime()) {
+      throw new VoteEntryChangeRestrictedException();
+    }
+
     try {
       return await this.voteEntryRepository.manager.transaction(async (tm) => {
         const result = await tm.delete(VoteEntryEntity, {
@@ -166,10 +172,7 @@ export class VoteService {
       exception instanceof ConflictException
     ) {
       throw exception;
-    } else if (
-      exception.code === UNIQUE_VIOLATION ||
-      exception.code === CHECK_VIOLATION
-    ) {
+    } else if (exception.code === UNIQUE_VIOLATION) {
       this.logger.debug('Exception: ' + JSON.stringify(exception));
 
       if (exception.constraint === 'vote_entry_user_id_date_key') {
