@@ -1,0 +1,6 @@
+application:
+  maxVoteTime: "11:00"
+  pageSize: 10
+  minPageSize: 5
+  maxPageSize: 100
+

@@ -1,8 +1,20 @@
 import {DateTimeFormatter, LocalDate, LocalTime} from '@js-joda/core';
 import {BaseEntity, SelectQueryBuilder, ValueTransformer} from 'typeorm';
+import {get as getConfig} from 'config';
+
+import {ApplicationConfig} from '../config/types/application-config.interface';
 
 export const MIN_DATE = LocalDate.of(1, 1, 1);
 export const MAX_DATE = LocalDate.of(3000, 1, 1);
+
+export const MAX_VOTE_TIME = LocalTime.parse(
+  getConfig<ApplicationConfig>('application').maxVoteTime,
+  DateTimeFormatter.ISO_LOCAL_TIME,
+);
+
+export function checkVoteTime(): boolean {
+  return LocalTime.now().compareTo(MAX_VOTE_TIME) <= 0;
+}
 
 export class DateTransformer implements ValueTransformer {
   from(date: string): LocalDate {
