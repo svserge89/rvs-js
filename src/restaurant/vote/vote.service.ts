@@ -109,16 +109,18 @@ export class VoteService {
     restaurantId: string,
     {date, minDate, maxDate}: FindRatingDto,
   ): Promise<number> {
-    let where: FindConditions<VoteEntryEntity>;
+    let where: FindConditions<VoteEntryEntity> = {
+      restaurant: {id: restaurantId},
+    };
 
     if (minDate && maxDate) {
-      where = {date: Between(minDate, maxDate)};
+      where = {...where, date: Between(minDate, maxDate)};
     } else if (minDate) {
-      where = {date: MoreThanOrEqual(minDate)};
+      where = {...where, date: MoreThanOrEqual(minDate)};
     } else if (maxDate) {
-      where = {date: LessThanOrEqual(maxDate)};
+      where = {...where, date: LessThanOrEqual(maxDate)};
     } else if (date) {
-      where = {date};
+      where = {...where, date};
     }
 
     try {
