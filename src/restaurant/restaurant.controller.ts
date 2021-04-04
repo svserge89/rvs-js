@@ -16,6 +16,7 @@ import {AuthGuard} from '@nestjs/passport';
 import {RoleAdmin} from '../auth/decorators/role-admin.decorator';
 import {RolesGuard} from '../auth/guards/roles.guard';
 import {CreateRestaurantDto} from './dto/create-restaurant.dto';
+import {FindRestaurantWithRatingDto} from './dto/find-restaurant-with-rating.dto';
 import {FindRestaurantsDto} from './dto/find-restaurants.dto';
 import {RestaurantPageResponseDto} from './dto/restaurant-page-response.dto';
 import {RestaurantResponseDto} from './dto/restaurant-response.dto';
@@ -60,10 +61,20 @@ export class RestaurantController {
   }
 
   @Get(':id')
-  findOne(
+  async findOne(
     @Param('id', ParseUUIDPipe) id: string,
+    @Query(new ValidationPipe({transform: true}))
+    {ratingDate, ratingMinDate, ratingMaxDate}: FindRestaurantWithRatingDto,
   ): Promise<RestaurantResponseDto> {
-    return this.restaurantService.findOne(id);
+    const restaurant = await this.restaurantService.findOne(id);
+
+    restaurant.rating = await this.voteService.rating(id, {
+      date: ratingDate,
+      minDate: ratingMinDate,
+      maxDate: ratingMaxDate,
+    });
+
+    return restaurant;
   }
 
   @Get()

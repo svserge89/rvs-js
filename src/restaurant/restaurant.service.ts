@@ -30,6 +30,7 @@ import {RestaurantEntity} from './entity/restaurant.entity';
 import {RestaurantConflictNameException} from './exception/restaurant-conflict-name.exception';
 import {RestaurantInvalidNameException} from './exception/restaurant-invalid-name.exception';
 import {RestaurantNotFoundException} from './exception/restaurant-not-found.exception';
+import {VoteEntryEntity} from './vote/entity/vote-entry.entity';
 
 const DEFAULT_FILTER_FIELDS: (keyof RestaurantEntity)[] = [
   'name',
@@ -132,6 +133,9 @@ export class RestaurantService {
     filter,
     filterFields = DEFAULT_FILTER_FIELDS,
     sort = DEFAULT_SORT_FIELDS,
+    ratingDate,
+    ratingMinDate,
+    ratingMaxDate,
   }: FindRestaurantsDto): Promise<RestaurantPageResponseDto> {
     const queryBuilder = createFindQueryBuilder(this.restaurantRepository, {
       page,
@@ -139,6 +143,15 @@ export class RestaurantService {
       sort,
       filter,
       filterFields,
+      count: {
+        relation: 'votes',
+        parent: 'restaurant',
+        field: 'rating',
+        entity: VoteEntryEntity,
+        date: ratingDate,
+        minDate: ratingMinDate,
+        maxDate: ratingMaxDate,
+      },
     });
 
     try {

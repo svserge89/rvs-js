@@ -37,6 +37,15 @@ export type FindQueryBuilderOptions = {
   maxDate?: LocalDate;
   fieldsMap?: Map<string, string>;
   relation?: string;
+  count?: {
+    relation: string;
+    field: string;
+    entity: any;
+    parent: string;
+    date?: LocalDate;
+    minDate?: LocalDate;
+    maxDate?: LocalDate;
+  };
 };
 
 export function createFindQueryBuilder<E extends BaseEntity>(
@@ -52,6 +61,7 @@ export function createFindQueryBuilder<E extends BaseEntity>(
     maxDate,
     fieldsMap,
     relation,
+    count,
   }: FindQueryBuilderOptions,
 ): SelectQueryBuilder<E> {
   let queryBuilder = repository.createQueryBuilder().take(size);
@@ -60,6 +70,36 @@ export function createFindQueryBuilder<E extends BaseEntity>(
     queryBuilder = queryBuilder.leftJoinAndSelect(
       `${queryBuilder.alias}.${relation}`,
       relation,
+    );
+  }
+
+  if (count) {
+    const {field, relation, parent, entity, date, minDate, maxDate} = count;
+
+    if (sort.includes(field)) {
+      queryBuilder = queryBuilder.addSelect((qb) => {
+        qb.select(`COUNT(*)`, field)
+          .from(entity, relation)
+          .where(`${relation}.${parent}.id = ${queryBuilder.alias}.id`);
+
+        return configDateFilter(qb, {
+          date,
+          minDate,
+          maxDate,
+        });
+      }, field);
+    }
+
+    queryBuilder = queryBuilder.loadRelationCountAndMap(
+      `${queryBuilder.alias}.${field}`,
+      `${queryBuilder.alias}.${relation}`,
+      field,
+      (qb) =>
+        configDateFilter(qb, {
+          date,
+          minDate,
+          maxDate,
+        }),
     );
   }
 
@@ -84,7 +124,7 @@ export function createFindQueryBuilder<E extends BaseEntity>(
   }
 
   if (sort) {
-    queryBuilder = configSort(queryBuilder, sort);
+    queryBuilder = configSort(queryBuilder, sort, count.field);
   }
 
   return queryBuilder;

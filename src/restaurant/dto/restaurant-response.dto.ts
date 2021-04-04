@@ -5,6 +5,7 @@ export interface RestaurantResponseDto {
   name: string;
   description: string;
   imageUrl: string;
+  rating: number;
 }
 
 export function toRestaurantResponseDto({
@@ -12,6 +13,7 @@ export function toRestaurantResponseDto({
   name,
   description,
   imageUrl,
+  rating,
 }: RestaurantEntity) {
-  return {id, name, description, imageUrl};
+  return {id, name, description, imageUrl, rating};
 }

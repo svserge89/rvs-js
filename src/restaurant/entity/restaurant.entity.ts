@@ -1,6 +1,13 @@
-import {BaseEntity, Column, Entity, PrimaryGeneratedColumn} from 'typeorm';
+import {
+  BaseEntity,
+  Column,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 import {NAME_LENGTH, URL_LENGTH} from '../../utils/database';
+import {VoteEntryEntity} from '../vote/entity/vote-entry.entity';
 
 @Entity({name: 'restaurant', schema: 'public'})
 export class RestaurantEntity extends BaseEntity {
@@ -20,4 +27,9 @@ export class RestaurantEntity extends BaseEntity {
     nullable: true,
   })
   imageUrl: string;
+
+  @OneToMany(() => VoteEntryEntity, (voteEntry) => voteEntry.restaurant)
+  votes: VoteEntryEntity[];
+
+  rating: number;
 }
