@@ -9,6 +9,8 @@ import {Repository} from 'typeorm';
 
 import {AllFieldsIsEmptyException} from '../../exception/all-fields-is-empty.exception';
 import {UnknownException} from '../../exception/unknown.exception';
+import {ImageService} from '../../image/image.service';
+import {Dimension} from '../../image/types/dimension.interface';
 import {
   CHECK_VIOLATION,
   createFindQueryBuilder,
@@ -36,6 +38,8 @@ const DEFAULT_SORT_FIELDS: (keyof DishEntity | typeof DESC_VALUE)[] = [
   'date',
   'DESC',
 ];
+const IMAGE_SIZE: Dimension = {width: 250, height: 250};
+const IMAGE_PATH = 'dish';
 
 @Injectable()
 export class DishService {
@@ -44,6 +48,7 @@ export class DishService {
   constructor(
     @InjectRepository(DishEntity)
     private readonly dishRepository: Repository<DishEntity>,
+    private readonly imageService: ImageService,
   ) {}
 
   async create(
@@ -123,6 +128,18 @@ export class DishService {
     }
   }
 
+  updateImage(
+    restaurantId: string,
+    id: string,
+    image: Express.Multer.File,
+  ): Promise<void> {
+    return this.saveImage(restaurantId, id, image);
+  }
+
+  removeImage(restaurantId: string, id: string): Promise<void> {
+    return this.saveImage(restaurantId, id);
+  }
+
   async delete(restaurantId: string, id: string): Promise<void> {
     try {
       return await this.dishRepository.manager.transaction(async (tm) => {
@@ -190,6 +207,41 @@ export class DishService {
       const [dishes, total] = await queryBuilder.getManyAndCount();
 
       return toDishPageResponseDto(dishes, page, size, total);
+    } catch (exception) {
+      this.checkException(exception);
+    }
+  }
+
+  private async saveImage(
+    restaurantId: string,
+    id: string,
+    image?: Express.Multer.File,
+  ) {
+    try {
+      await this.dishRepository.manager.transaction(async (tm) => {
+        const dish = await tm.findOne(DishEntity, {
+          id,
+          restaurant: {id: restaurantId},
+        });
+
+        if (!dish) {
+          throw new DishNotFoundException(id);
+        }
+
+        const fileName = image
+          ? await this.imageService.save(image, IMAGE_SIZE, IMAGE_PATH)
+          : null;
+
+        if (dish.imageUrl) {
+          await this.imageService.delete(dish.imageUrl);
+        }
+
+        await tm.update(
+          DishEntity,
+          {id, restaurant: {id: restaurantId}},
+          {imageUrl: fileName},
+        );
+      });
     } catch (exception) {
       this.checkException(exception);
     }

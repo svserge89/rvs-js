@@ -7,14 +7,19 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Put,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
   ValidationPipe,
 } from '@nestjs/common';
 import {AuthGuard} from '@nestjs/passport';
+import {FileInterceptor} from '@nestjs/platform-express';
 
 import {RoleAdmin} from '../../auth/decorators/role-admin.decorator';
 import {RolesGuard} from '../../auth/guards/roles.guard';
+import {ImageValidationPipe} from '../../image/pipe/image-validation.pipe';
 import {DishService} from './dish.service';
 import {CreateDishDto} from './dto/create-dish.dto';
 import {DishPageResponseDto} from './dto/dish-page-response.dto';
@@ -36,6 +41,16 @@ export class DishController {
     return this.dishService.create(restaurantId, dishDto);
   }
 
+  @Put(':id/image')
+  @UseInterceptors(FileInterceptor('image'))
+  uploadImage(
+    @Param('restaurantId', ParseUUIDPipe) restaurantId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile(ImageValidationPipe) image: Express.Multer.File,
+  ): Promise<void> {
+    return this.dishService.updateImage(restaurantId, id, image);
+  }
+
   @Patch(':id')
   update(
     @Param('restaurantId', ParseUUIDPipe) restaurantId: string,
@@ -51,6 +66,14 @@ export class DishController {
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<void> {
     return this.dishService.delete(restaurantId, id);
+  }
+
+  @Delete(':id/image')
+  removeImage(
+    @Param('restaurantId', ParseUUIDPipe) restaurantId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<void> {
+    return this.dishService.removeImage(restaurantId, id);
   }
 
   @Get(':id')
