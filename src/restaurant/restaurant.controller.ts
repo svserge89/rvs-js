@@ -54,7 +54,7 @@ export class RestaurantController {
   uploadImage(
     @Param('id', ParseUUIDPipe) id: string,
     @UploadedFile(ImageValidationPipe) image: Express.Multer.File,
-  ) {
+  ): Promise<void> {
     return this.restaurantService.updateImage(id, image);
   }
 
@@ -79,7 +79,7 @@ export class RestaurantController {
   @Delete(':id/image')
   @UseGuards(AuthGuard(), RolesGuard)
   @RoleAdmin()
-  removeImage(@Param('id') id: string) {
+  removeImage(@Param('id') id: string): Promise<void> {
     return this.restaurantService.removeImage(id);
   }
 
