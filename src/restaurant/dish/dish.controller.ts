@@ -3,6 +3,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -42,6 +44,7 @@ export class DishController {
   }
 
   @Put(':id/image')
+  @HttpCode(HttpStatus.NO_CONTENT)
   @UseInterceptors(FileInterceptor('image'))
   uploadImage(
     @Param('restaurantId', ParseUUIDPipe) restaurantId: string,
@@ -61,6 +64,7 @@ export class DishController {
   }
 
   @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   delete(
     @Param('restaurantId', ParseUUIDPipe) restaurantId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -69,6 +73,7 @@ export class DishController {
   }
 
   @Delete(':id/image')
+  @HttpCode(HttpStatus.NO_CONTENT)
   removeImage(
     @Param('restaurantId', ParseUUIDPipe) restaurantId: string,
     @Param('id', ParseUUIDPipe) id: string,

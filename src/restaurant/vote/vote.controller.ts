@@ -1,6 +1,8 @@
 import {
   Controller,
   Delete,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseUUIDPipe,
   Post,
@@ -21,6 +23,7 @@ export class VoteController {
   constructor(private readonly voteService: VoteService) {}
 
   @Post()
+  @HttpCode(HttpStatus.NO_CONTENT)
   create(
     @Param('restaurantId', ParseUUIDPipe) restaurantId: string,
     @GetUserPayload() userPayload: UserPayload,
@@ -29,6 +32,7 @@ export class VoteController {
   }
 
   @Delete()
+  @HttpCode(HttpStatus.NO_CONTENT)
   delete(
     @Param('restaurantId', ParseUUIDPipe) restaurantId: string,
     @GetUserPayload() userPayload: UserPayload,

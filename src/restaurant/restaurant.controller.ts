@@ -3,6 +3,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -48,6 +50,7 @@ export class RestaurantController {
   }
 
   @Put(':id/image')
+  @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(AuthGuard(), RolesGuard)
   @UseInterceptors(FileInterceptor('image'))
   @RoleAdmin()
@@ -70,6 +73,7 @@ export class RestaurantController {
   }
 
   @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(AuthGuard(), RolesGuard)
   @RoleAdmin()
   delete(@Param('id') id: string): Promise<void> {
@@ -77,6 +81,7 @@ export class RestaurantController {
   }
 
   @Delete(':id/image')
+  @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(AuthGuard(), RolesGuard)
   @RoleAdmin()
   removeImage(@Param('id') id: string): Promise<void> {
