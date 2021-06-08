@@ -124,7 +124,7 @@ export function createFindQueryBuilder<E extends BaseEntity>(
   }
 
   if (sort) {
-    queryBuilder = configSort(queryBuilder, sort, count.field);
+    queryBuilder = configSort(queryBuilder, sort, count?.field);
   }
 
   return queryBuilder;
