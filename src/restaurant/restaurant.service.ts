@@ -104,54 +104,12 @@ export class RestaurantService {
     }
   }
 
-  async updateImage(id: string, image: Express.Multer.File) {
-    try {
-      const fileName = await this.imageService.save(
-        image,
-        IMAGE_SIZE,
-        IMAGE_PATH,
-      );
-
-      await this.restaurantRepository.manager.transaction(async (tm) => {
-        const restaurant = await tm.findOne(RestaurantEntity, id);
-
-        if (!restaurant) {
-          throw new RestaurantNotFoundException(id);
-        }
-
-        if (restaurant.imageUrl) {
-          await this.imageService.delete(restaurant.imageUrl);
-        }
-
-        restaurant.imageUrl = fileName;
-
-        await tm.save(restaurant);
-      });
-    } catch (exception) {
-      this.checkException(exception);
-    }
+  updateImage(id: string, image: Express.Multer.File): Promise<void> {
+    return this.saveImage(id, image);
   }
 
-  async removeImage(id: string) {
-    try {
-      await this.restaurantRepository.manager.transaction(async (tm) => {
-        const restaurant = await tm.findOne(RestaurantEntity, id);
-
-        if (!restaurant) {
-          throw new RestaurantNotFoundException(id);
-        }
-
-        if (restaurant.imageUrl) {
-          await this.imageService.delete(restaurant.imageUrl);
-        }
-
-        restaurant.imageUrl = null;
-
-        await tm.save(restaurant);
-      });
-    } catch (exception) {
-      this.checkException(exception);
-    }
+  removeImage(id: string): Promise<void> {
+    return this.saveImage(id);
   }
 
   async delete(id: string): Promise<void> {
@@ -213,6 +171,30 @@ export class RestaurantService {
       const [restaurants, total] = await queryBuilder.getManyAndCount();
 
       return toRestaurantPageResponseDto(restaurants, page, size, total);
+    } catch (exception) {
+      this.checkException(exception);
+    }
+  }
+
+  private async saveImage(id: string, image?: Express.Multer.File) {
+    try {
+      const fileName = image
+        ? await this.imageService.save(image, IMAGE_SIZE, IMAGE_PATH)
+        : null;
+
+      await this.restaurantRepository.manager.transaction(async (tm) => {
+        const restaurant = await tm.findOne(RestaurantEntity, id);
+
+        if (!restaurant) {
+          throw new RestaurantNotFoundException(id);
+        }
+
+        if (restaurant.imageUrl) {
+          await this.imageService.delete(restaurant.imageUrl);
+        }
+
+        await tm.update(RestaurantEntity, {id}, {imageUrl: fileName});
+      });
     } catch (exception) {
       this.checkException(exception);
     }
