@@ -7,14 +7,19 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Put,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
   ValidationPipe,
 } from '@nestjs/common';
 import {AuthGuard} from '@nestjs/passport';
+import {FileInterceptor} from '@nestjs/platform-express';
 
 import {RoleAdmin} from '../auth/decorators/role-admin.decorator';
 import {RolesGuard} from '../auth/guards/roles.guard';
+import {ImageValidationPipe} from '../image/pipe/image-validation.pipe';
 import {CreateRestaurantDto} from './dto/create-restaurant.dto';
 import {FindRestaurantWithRatingDto} from './dto/find-restaurant-with-rating.dto';
 import {FindRestaurantsDto} from './dto/find-restaurants.dto';
@@ -42,6 +47,17 @@ export class RestaurantController {
     return this.restaurantService.create(restaurantDto);
   }
 
+  @Put(':id/image')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @UseInterceptors(FileInterceptor('image'))
+  @RoleAdmin()
+  uploadImage(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile(ImageValidationPipe) image: Express.Multer.File,
+  ) {
+    return this.restaurantService.updateImage(id, image);
+  }
+
   @Patch(':id')
   @UseGuards(AuthGuard(), RolesGuard)
   @RoleAdmin()
@@ -58,6 +74,13 @@ export class RestaurantController {
   @RoleAdmin()
   delete(@Param('id') id: string): Promise<void> {
     return this.restaurantService.delete(id);
+  }
+
+  @Delete(':id/image')
+  @UseGuards(AuthGuard(), RolesGuard)
+  @RoleAdmin()
+  removeImage(@Param('id') id: string) {
+    return this.restaurantService.removeImage(id);
   }
 
   @Get(':id')

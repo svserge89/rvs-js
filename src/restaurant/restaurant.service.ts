@@ -9,6 +9,8 @@ import {Repository} from 'typeorm';
 
 import {AllFieldsIsEmptyException} from '../exception/all-fields-is-empty.exception';
 import {UnknownException} from '../exception/unknown.exception';
+import {ImageService} from '../image/image.service';
+import {Dimension} from '../image/types/dimension.interface';
 import {
   CHECK_VIOLATION,
   createFindQueryBuilder,
@@ -39,6 +41,8 @@ const DEFAULT_FILTER_FIELDS: (keyof RestaurantEntity)[] = [
 const DEFAULT_SORT_FIELDS: (keyof RestaurantEntity | typeof DESC_VALUE)[] = [
   'name',
 ];
+const IMAGE_SIZE: Dimension = {width: 250, height: 250};
+const IMAGE_PATH = 'restaurant';
 
 @Injectable()
 export class RestaurantService {
@@ -47,6 +51,7 @@ export class RestaurantService {
   constructor(
     @InjectRepository(RestaurantEntity)
     private readonly restaurantRepository: Repository<RestaurantEntity>,
+    private readonly imageService: ImageService,
   ) {}
 
   async create({
@@ -96,6 +101,56 @@ export class RestaurantService {
       );
     } catch (exception) {
       this.checkException(exception, name);
+    }
+  }
+
+  async updateImage(id: string, image: Express.Multer.File) {
+    try {
+      const fileName = await this.imageService.save(
+        image,
+        IMAGE_SIZE,
+        IMAGE_PATH,
+      );
+
+      await this.restaurantRepository.manager.transaction(async (tm) => {
+        const restaurant = await tm.findOne(RestaurantEntity, id);
+
+        if (!restaurant) {
+          throw new RestaurantNotFoundException(id);
+        }
+
+        if (restaurant.imageUrl) {
+          await this.imageService.delete(restaurant.imageUrl);
+        }
+
+        restaurant.imageUrl = fileName;
+
+        await tm.save(restaurant);
+      });
+    } catch (exception) {
+      this.checkException(exception);
+    }
+  }
+
+  async removeImage(id: string) {
+    try {
+      await this.restaurantRepository.manager.transaction(async (tm) => {
+        const restaurant = await tm.findOne(RestaurantEntity, id);
+
+        if (!restaurant) {
+          throw new RestaurantNotFoundException(id);
+        }
+
+        if (restaurant.imageUrl) {
+          await this.imageService.delete(restaurant.imageUrl);
+        }
+
+        restaurant.imageUrl = null;
+
+        await tm.save(restaurant);
+      });
+    } catch (exception) {
+      this.checkException(exception);
     }
   }
 
