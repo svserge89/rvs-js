@@ -10,6 +10,8 @@ import {Repository, SelectQueryBuilder} from 'typeorm';
 import {UserPayload} from '../auth/types/user-payload.interface';
 import {AllFieldsIsEmptyException} from '../exception/all-fields-is-empty.exception';
 import {UnknownException} from '../exception/unknown.exception';
+import {ImageService} from '../image/image.service';
+import {Dimension} from '../image/types/dimension.interface';
 import {
   CHECK_VIOLATION,
   configSelect,
@@ -61,6 +63,8 @@ const DEFAULT_SORT_FIELDS: (keyof UserEntity | typeof DESC_VALUE)[] = [
   'nickName',
   'email',
 ];
+const IMAGE_SIZE: Dimension = {width: 250, height: 250};
+const IMAGE_PATH = 'user';
 
 @Injectable()
 export class UserService {
@@ -69,6 +73,7 @@ export class UserService {
   constructor(
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
+    private readonly imageService: ImageService,
   ) {}
 
   async create({
@@ -201,6 +206,14 @@ export class UserService {
     }
   }
 
+  updateImage(id: string, image: Express.Multer.File): Promise<void> {
+    return this.saveImage(id, image);
+  }
+
+  removeImage(id: string): Promise<void> {
+    return this.saveImage(id);
+  }
+
   async delete(id: string): Promise<void> {
     try {
       return await this.userRepository.manager.transaction(async (tm) => {
@@ -270,6 +283,32 @@ export class UserService {
       const [users, total] = await queryBuilder.getManyAndCount();
 
       return toUserPageResponseDto(users, page, size, total);
+    } catch (exception) {
+      this.checkException(exception);
+    }
+  }
+
+  private async saveImage(id: string, image?: Express.Multer.File) {
+    try {
+      await this.userRepository.manager.transaction(async (tm) => {
+        const user = await tm.findOne(UserEntity, id, {
+          select: ['id', 'imageUrl'],
+        });
+
+        if (!user) {
+          throw new UserNotFoundException(id);
+        }
+
+        const fileName = image
+          ? await this.imageService.save(image, IMAGE_SIZE, IMAGE_PATH)
+          : null;
+
+        if (user.imageUrl) {
+          await this.imageService.delete(user.imageUrl);
+        }
+
+        await tm.update(UserEntity, {id}, {imageUrl: fileName});
+      });
     } catch (exception) {
       this.checkException(exception);
     }
