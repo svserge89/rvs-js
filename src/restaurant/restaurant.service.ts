@@ -179,7 +179,9 @@ export class RestaurantService {
   private async saveImage(id: string, image?: Express.Multer.File) {
     try {
       await this.restaurantRepository.manager.transaction(async (tm) => {
-        const restaurant = await tm.findOne(RestaurantEntity, id);
+        const restaurant = await tm.findOne(RestaurantEntity, id, {
+          select: ['id', 'imageUrl'],
+        });
 
         if (!restaurant) {
           throw new RestaurantNotFoundException(id);

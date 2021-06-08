@@ -219,10 +219,11 @@ export class DishService {
   ) {
     try {
       await this.dishRepository.manager.transaction(async (tm) => {
-        const dish = await tm.findOne(DishEntity, {
-          id,
-          restaurant: {id: restaurantId},
-        });
+        const dish = await tm.findOne(
+          DishEntity,
+          {id, restaurant: {id: restaurantId}},
+          {select: ['id', 'imageUrl']},
+        );
 
         if (!dish) {
           throw new DishNotFoundException(id);
