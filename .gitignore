@@ -38,3 +38,6 @@ lerna-debug.log*
 
 # SQL
 sql
+
+# Static Images
+/image
